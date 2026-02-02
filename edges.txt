@@ -1,0 +1,18 @@
+# Example DAG: build pipeline
+init parse
+init config
+fetch transform
+parse fetch
+parse validate
+parse build
+config lint
+config transform
+config build
+config deploy
+transform bundle
+validate bundle
+validate test
+build validate
+deploy test
+bundle publish
+test publish
