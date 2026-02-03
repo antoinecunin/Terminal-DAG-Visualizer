@@ -105,6 +105,10 @@ void build_canvas(Canvas *cv, const Graph *g,
                   const NodeList *levels, int level_count, int canvas_width);
 void canvas_free(Canvas *cv);
 
+/* ---- Rendering ---- */
+
+void event_loop(const Graph *g, const Canvas *cv);
+
 /* ---- Input parsing ---- */
 
 int read_edges(FILE *fp, RawEdge *edges, int max);
