@@ -123,9 +123,9 @@ static int find_clicked(const Canvas *cv, int node_count,
     return -1;
 }
 
-/* ---- public API ---- */
+/* ---- setup ---- */
 
-void event_loop(const Graph *g, const Canvas *cv) {
+static void render_setup(mmask_t *scroll_up, mmask_t *scroll_down) {
     curs_set(0);
     mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
     start_color();
@@ -133,17 +133,25 @@ void event_loop(const Graph *g, const Canvas *cv) {
     init_pair(1, COLOR_WHITE, -1);
     init_pair(2, COLOR_YELLOW, -1);
 
-    mmask_t scroll_up_mask = 0, scroll_down_mask = 0;
+    *scroll_up = 0;
+    *scroll_down = 0;
 #ifdef BUTTON4_PRESSED
-    scroll_up_mask = BUTTON4_PRESSED;
+    *scroll_up = BUTTON4_PRESSED;
 #endif
 #ifdef BUTTON5_PRESSED
-    scroll_down_mask = BUTTON5_PRESSED;
+    *scroll_down = BUTTON5_PRESSED;
 #endif
-    if (scroll_up_mask && !scroll_down_mask)
-        scroll_down_mask = scroll_up_mask << 5;
-    if (scroll_down_mask && !scroll_up_mask)
-        scroll_up_mask = scroll_down_mask >> 5;
+    if (*scroll_up && !*scroll_down)
+        *scroll_down = *scroll_up << 5;
+    if (*scroll_down && !*scroll_up)
+        *scroll_up = *scroll_down >> 5;
+}
+
+/* ---- public API ---- */
+
+void event_loop(const Graph *g, const Canvas *cv) {
+    mmask_t scroll_up_mask, scroll_down_mask;
+    render_setup(&scroll_up_mask, &scroll_down_mask);
 
     int scroll_x = 0, scroll_y = 0, selected = -1;
     bool *highlight = calloc(cv->width * cv->height, sizeof *highlight);

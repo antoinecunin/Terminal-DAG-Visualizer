@@ -101,6 +101,8 @@ void sugiyama(const Graph *orig, Graph *out, NodeList *levels, int *level_count)
 
 /* ---- Canvas ---- */
 
+int  canvas_compute_width(const Graph *g, const NodeList *levels,
+                          int level_count);
 void build_canvas(Canvas *cv, const Graph *g,
                   const NodeList *levels, int level_count, int canvas_width);
 void canvas_free(Canvas *cv);

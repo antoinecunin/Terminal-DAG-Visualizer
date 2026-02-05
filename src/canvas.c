@@ -60,31 +60,23 @@ static void draw_hline(Canvas *cv, int y, int x0, int x1) {
     path_push(cv, y, x1);
 }
 
-/* ---- public API ---- */
+/* ---- internal steps ---- */
 
-void build_canvas(Canvas *cv, const Graph *g,
-                  const NodeList *levels, int level_count, int canvas_width) {
-    int canvas_height = VERT_SPACING * level_count + CANVAS_MARGIN;
-    cv->width = canvas_width;
-    cv->height = canvas_height;
-    cv->cells = calloc(canvas_height * canvas_width, sizeof *cv->cells);
-    cv->dirs  = calloc(canvas_height * canvas_width, sizeof *cv->dirs);
-    if (!cv->cells || !cv->dirs) return;
-    for (int i = 0; i < canvas_height * canvas_width; i++) cv->cells[i] = L' ';
-
-    /* node coordinates */
+static void canvas_place_nodes(Canvas *cv, const NodeList *levels,
+                               int level_count) {
     for (int lvl = 0; lvl < level_count; lvl++) {
         int nodes_in_level = levels[lvl].count;
         if (nodes_in_level == 0) nodes_in_level = 1;
         for (int ni = 0; ni < levels[lvl].count; ni++) {
             int node = levels[lvl].items[ni];
             cv->node_col[node] = (int)round(
-                (ni + 0.5) / (double)nodes_in_level * (canvas_width - 1));
+                (ni + 0.5) / (double)nodes_in_level * (cv->width - 1));
             cv->node_row[node] = VERT_SPACING * lvl;
         }
     }
+}
 
-    /* edge paths */
+static void canvas_route_edges(Canvas *cv, const Graph *g) {
     cv->pr = NULL; cv->pc = NULL;
     cv->ptotal = cv->pcap = 0;
     cv->ep_count = 0;
@@ -109,12 +101,12 @@ void build_canvas(Canvas *cv, const Graph *g,
             }
         }
     }
+}
 
-    /* dirs -> connector characters */
-    for (int i = 0; i < canvas_height * canvas_width; i++)
+static void canvas_stamp_glyphs(Canvas *cv, const Graph *g) {
+    for (int i = 0; i < cv->height * cv->width; i++)
         cv->cells[i] = CONNECTOR[cv->dirs[i]];
 
-    /* node labels (overwrite connectors) */
     memset(cv->has_bnd, 0, sizeof cv->has_bnd);
     for (int i = 0; i < g->count; i++) {
         if (!g->nodes[i].active || g->nodes[i].is_dummy) continue;
@@ -123,8 +115,8 @@ void build_canvas(Canvas *cv, const Graph *g,
         int label_start = col - label_len / 2;
         for (int c = 0; c < label_len; c++) {
             int x = label_start + c;
-            if (x >= 0 && x < canvas_width)
-                cv->cells[row * canvas_width + x] =
+            if (x >= 0 && x < cv->width)
+                cv->cells[row * cv->width + x] =
                     (wchar_t)g->nodes[i].name[c];
         }
         cv->bnd_xs[i] = label_start;
@@ -132,6 +124,39 @@ void build_canvas(Canvas *cv, const Graph *g,
         cv->bnd_y[i]  = row;
         cv->has_bnd[i] = true;
     }
+}
+
+/* ---- public API ---- */
+
+int canvas_compute_width(const Graph *g, const NodeList *levels,
+                         int level_count) {
+    int max_label = 1;
+    for (int i = 0; i < g->count; i++)
+        if (g->nodes[i].active && !g->nodes[i].is_dummy) {
+            int len = (int)strlen(g->nodes[i].name);
+            if (len > max_label) max_label = len;
+        }
+    int cols_per_node = max_label + 2;
+    if (cols_per_node < MIN_COLS_NODE) cols_per_node = MIN_COLS_NODE;
+    int max_level_size = 1;
+    for (int i = 0; i < level_count; i++)
+        if (levels[i].count > max_level_size)
+            max_level_size = levels[i].count;
+    return cols_per_node * max_level_size + CANVAS_MARGIN;
+}
+
+void build_canvas(Canvas *cv, const Graph *g,
+                  const NodeList *levels, int level_count, int canvas_width) {
+    cv->width = canvas_width;
+    cv->height = VERT_SPACING * level_count + CANVAS_MARGIN;
+    cv->cells = calloc(cv->height * cv->width, sizeof *cv->cells);
+    cv->dirs  = calloc(cv->height * cv->width, sizeof *cv->dirs);
+    if (!cv->cells || !cv->dirs) return;
+    for (int i = 0; i < cv->height * cv->width; i++) cv->cells[i] = L' ';
+
+    canvas_place_nodes(cv, levels, level_count);
+    canvas_route_edges(cv, g);
+    canvas_stamp_glyphs(cv, g);
 }
 
 void canvas_free(Canvas *cv) {

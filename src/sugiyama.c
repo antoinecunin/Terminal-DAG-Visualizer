@@ -127,12 +127,15 @@ static void solve_mid_transition(Graph *g, int src, int dst,
                                  NodeList *levels, int *dummy_id) {
     int level_from = g->nodes[src].level;
     int level_to   = g->nodes[dst].level;
+    int span = abs(level_to - level_from) - 1;
+    if (span <= 0) return;
+    if (g->count + span > MAX_NODES) return;
+
     int step = (level_to > level_from) ? 1 : -1;
     graph_remove_edge(g, src, dst);
 
     int prev = src;
     for (int lvl = level_from + step; lvl != level_to; lvl += step) {
-        if (g->count >= MAX_NODES) break;
         int dummy = g->count++;
         Node *dn = &g->nodes[dummy];
         memset(dn, 0, sizeof *dn);

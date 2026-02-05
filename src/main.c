@@ -69,20 +69,7 @@ int main(int argc, char *argv[]) {
     int level_count;
     sugiyama(&orig, &layout, levels, &level_count);
 
-    /* canvas dimensions */
-    int max_label = 1;
-    for (int i = 0; i < layout.count; i++)
-        if (layout.nodes[i].active && !layout.nodes[i].is_dummy) {
-            int len = (int)strlen(layout.nodes[i].name);
-            if (len > max_label) max_label = len;
-        }
-    int cols_per_node = max_label + 2;
-    if (cols_per_node < MIN_COLS_NODE) cols_per_node = MIN_COLS_NODE;
-    int max_level_size = 1;
-    for (int i = 0; i < level_count; i++)
-        if (levels[i].count > max_level_size)
-            max_level_size = levels[i].count;
-    int canvas_width = cols_per_node * max_level_size + CANVAS_MARGIN;
+    int canvas_width = canvas_compute_width(&layout, levels, level_count);
 
     Canvas cv = {0};
     build_canvas(&cv, &layout, levels, level_count, canvas_width);
