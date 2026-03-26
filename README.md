@@ -1,6 +1,6 @@
 # drawdag
 
-A lightweight, free terminal DAG (Directed Acyclic Graph) visualizer built for SSH-friendly environments and Unix pipelines.
+A lightweight, free terminal DAG (Directed Acyclic Graph) visualizer built for SSH-friendly environments and Unix pipelines. Primarily tested with [Konsole](https://konsole.kde.org/).
 
 This project started as a Python prototype during an internship at [EOST](https://eost.unistra.fr/) (École et Observatoire des Sciences de la Terre, Strasbourg) and has since been rewritten in C for performance and portability.
 
